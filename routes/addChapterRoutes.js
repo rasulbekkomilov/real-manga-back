@@ -1,24 +1,29 @@
 // routes/addChapterRoutes.js
+
 const express = require("express");
-const multer = require("multer");
-const { supabase, imagekit } = require("../supabaseClient");
-
 const router = express.Router();
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const multer = require("multer");
+const upload = multer();
+const { supabase } = require("../supabaseClient");
+const ImageKit = require("imagekit");
 
-// POST /api/add-chapter
-router.post("/add-chapter", upload.array("images"), async (req, res) => {
+const imagekit = new ImageKit({
+   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
+
+router.post("/", upload.array("images"), async (req, res) => {
    try {
       const { manga_id, chapter_title, chapter_slug, chapter_number } = req.body;
-      const files = req.files;
+      const images = req.files;
 
-      if (!manga_id || !chapter_title || !chapter_slug || !chapter_number || !files?.length) {
-         return res.status(400).json({ error: "⚠️ Barcha maydonlar to‘ldirilishi kerak." });
+      if (!manga_id || !chapter_title || !chapter_slug || !chapter_number || images.length === 0) {
+         return res.status(400).json({ message: "All fields are required." });
       }
 
-      // 1. Yangi bob qo‘shish
-      const { data: newChapter, error: insertError } = await supabase
+      // 1. Save chapter to DB
+      const { data: chapterData, error: chapterError } = await supabase
          .from("chapter")
          .insert([
             {
@@ -31,34 +36,27 @@ router.post("/add-chapter", upload.array("images"), async (req, res) => {
          .select()
          .single();
 
-      if (insertError) throw insertError;
+      if (chapterError) throw chapterError;
 
-      // 2. Sahifalarni yuklash va bazaga yozish
-      const pageInsertData = [];
-
-      for (let i = 0; i < files.length; i++) {
+      // 2. Upload each image to ImageKit and insert page data
+      for (let i = 0; i < images.length; i++) {
+         const image = images[i];
          const uploaded = await imagekit.upload({
-            file: files[i].buffer,
-            fileName: files[i].originalname,
+            file: image.buffer,
+            fileName: `chapter_${chapter_slug}_page_${i + 1}.jpg`,
          });
 
-         pageInsertData.push({
-            chapter_id: newChapter.id,
+         await supabase.from("chapter_pages").insert({
+            chapter_id: chapterData.id,
             page_number: i + 1,
             image_url: uploaded.url,
          });
       }
 
-      const { error: pagesInsertError } = await supabase
-         .from("chapter_pages")
-         .insert(pageInsertData);
-
-      if (pagesInsertError) throw pagesInsertError;
-
-      res.status(201).json({ message: "✅ Bob muvaffaqiyatli qo‘shildi!" });
-   } catch (err) {
-      console.error("❌ Xatolik:", err.message);
-      res.status(500).json({ error: "Serverda xatolik yuz berdi." });
+      res.status(200).json({ message: "Chapter added successfully." });
+   } catch (error) {
+      console.error("❌ Server Error:", error.message);
+      res.status(500).json({ message: "Internal Server Error" });
    }
 });
 
