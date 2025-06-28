@@ -11,10 +11,12 @@ app.use(bodyParser.json({ limit: '20mb' }));
 const mangaRoutes = require('./routes/mangaRoutes');
 const chapterRoutes = require('./routes/chapterRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const addChapterRoutes = require("./routes/addChapterRoutes");
 
 app.use('/api', mangaRoutes);
 app.use('/api', chapterRoutes);
 app.use('/api', uploadRoutes);
+app.use("/api", addChapterRoutes);
 
 // Test route
 app.get('/', (req, res) => {

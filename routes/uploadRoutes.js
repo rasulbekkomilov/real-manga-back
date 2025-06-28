@@ -1,33 +1,26 @@
+// routes/uploadRoutes.js
 const express = require("express");
-const router = express.Router();
 const multer = require("multer");
-const ImageKit = require("imagekit");
+const { imagekit } = require("../supabaseClient");
 
-// 🔐 ImageKit konfiguratsiyasi
-const imagekit = new ImageKit({
-   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
-
-// 📦 Multer orqali fayl olish
+const router = express.Router();
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// 🔄 Upload endpoint
 router.post("/upload", upload.single("file"), async (req, res) => {
    try {
       const file = req.file;
+      if (!file) return res.status(400).json({ error: "Rasm fayli yo‘q." });
 
-      const result = await imagekit.upload({
+      const uploaded = await imagekit.upload({
          file: file.buffer,
          fileName: file.originalname,
       });
 
-      res.status(200).json({ url: result.url });
+      res.status(200).json({ url: uploaded.url });
    } catch (err) {
-      console.error("❌ Upload xatosi:", err.message);
-      res.status(500).json({ error: "Rasm yuklashda xato", details: err.message });
+      console.error("❌ Yuklashda xato:", err.message);
+      res.status(500).json({ error: "Yuklashda xatolik yuz berdi." });
    }
 });
 
