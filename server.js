@@ -4,26 +4,25 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 
 const app = express();
-
-// Middlewares
 app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
 
-// Routes
-const chapterRoutes = require('./routes/chapterRoutes');
+// ROUTES
 const mangaRoutes = require('./routes/mangaRoutes');
+const chapterRoutes = require('./routes/chapterRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
-app.use('/api', chapterRoutes);
 app.use('/api', mangaRoutes);
+app.use('/api', chapterRoutes);
+app.use('/api', uploadRoutes);
 
 // Test route
 app.get('/', (req, res) => {
    res.send('✅ Real Manga backend ishlayapti');
 });
 
-// Serverni ishga tushirish
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`));
-
-const uploadRoutes = require("./routes/uploadRoutes");
-app.use("/api", uploadRoutes);
+app.listen(PORT, () => {
+   console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
+});
