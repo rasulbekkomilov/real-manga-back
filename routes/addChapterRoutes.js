@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { supabase } = require("../utils/supabase");
+const { supabase } = require("../supabaseClient");
 
 router.post("/add-chapter", async (req, res) => {
    const { manga_id, chapter_title, chapter_slug, chapter_number, image_urls } = req.body;
