@@ -15,6 +15,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/add-chapter", addChapterRoutes);
 app.use("/api/add-manga", addMangaRoutes); // ✅ YANGI
 
+
 // Server ishga tushishi
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
