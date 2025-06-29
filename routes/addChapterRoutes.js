@@ -1,62 +1,41 @@
-// routes/addChapterRoutes.js
-
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const upload = multer();
 const { supabase } = require("../supabaseClient");
-const ImageKit = require("imagekit");
 
-const imagekit = new ImageKit({
-   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
-
-router.post("/", upload.array("images"), async (req, res) => {
+router.post("/add-chapter", async (req, res) => {
    try {
-      const { manga_id, chapter_title, chapter_slug, chapter_number } = req.body;
-      const images = req.files;
+      const { manga_id, chapter_title, chapter_slug, chapter_number, image_urls } = req.body;
 
-      if (!manga_id || !chapter_title || !chapter_slug || !chapter_number || images.length === 0) {
-         return res.status(400).json({ message: "All fields are required." });
+      if (!manga_id || !chapter_title || !chapter_slug || !chapter_number || !image_urls?.length) {
+         return res.status(400).json({ error: "⚠️ Barcha maydonlar to‘ldirilishi shart." });
       }
 
-      // 1. Save chapter to DB
-      const { data: chapterData, error: chapterError } = await supabase
+      const { data: chapter, error: chapterError } = await supabase
          .from("chapter")
-         .insert([
-            {
-               manga_id,
-               title: chapter_title,
-               slug: chapter_slug,
-               chapter_number: parseInt(chapter_number),
-            },
-         ])
+         .insert({
+            manga_id,
+            title: chapter_title,
+            slug: chapter_slug,
+            chapter_number,
+         })
          .select()
          .single();
 
       if (chapterError) throw chapterError;
 
-      // 2. Upload each image to ImageKit and insert page data
-      for (let i = 0; i < images.length; i++) {
-         const image = images[i];
-         const uploaded = await imagekit.upload({
-            file: image.buffer,
-            fileName: `chapter_${chapter_slug}_page_${i + 1}.jpg`,
-         });
+      const pages = image_urls.map((url, index) => ({
+         chapter_id: chapter.id,
+         page_number: index + 1,
+         image_url: url,
+      }));
 
-         await supabase.from("chapter_pages").insert({
-            chapter_id: chapterData.id,
-            page_number: i + 1,
-            image_url: uploaded.url,
-         });
-      }
+      const { error: pagesError } = await supabase.from("chapter_pages").insert(pages);
+      if (pagesError) throw pagesError;
 
-      res.status(200).json({ message: "Chapter added successfully." });
+      res.status(200).json({ message: "✅ Bob va sahifalar qo‘shildi." });
    } catch (error) {
-      console.error("❌ Server Error:", error.message);
-      res.status(500).json({ message: "Internal Server Error" });
+      console.error("❌ Backend xatolik:", error.message || error);
+      res.status(500).json({ error: "❌ Serverda xatolik yuz berdi." });
    }
 });
 
