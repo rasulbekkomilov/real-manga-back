@@ -1,23 +1,27 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
 require("dotenv").config();
 
-const uploadRoutes = require("./routes/uploadRoutes");
+const addMangaRoutes = require("./routes/addMangaRoutes");
 const addChapterRoutes = require("./routes/addChapterRoutes");
-const addMangaRoutes = require("./routes/addMangaRoutes"); // ✅ YANGI
+const uploadRoutes = require("./routes/uploadRoutes");
 
+const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
-// Route'lar
-app.use("/api/upload", uploadRoutes);
-app.use("/api/add-chapter", addChapterRoutes);
-app.use("/api/add-manga", addMangaRoutes); // ✅ YANGI
+// 🔧 GET / uchun oddiy javob
+app.get("/", (req, res) => {
+   res.send("✅ Manga backend server ishlayapti.");
+});
 
+// 🔁 API routelar
+app.use("/api", addMangaRoutes);
+app.use("/api", addChapterRoutes);
+app.use("/api", uploadRoutes);
 
-// Server ishga tushishi
+// 🔃 Port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-   console.log(`✅ Server ${PORT} portda ishga tushdi`);
+   console.log(`🚀 Server ${PORT}-portda ishga tushdi`);
 });
