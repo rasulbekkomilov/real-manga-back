@@ -6,20 +6,14 @@ const { supabase } = require("../supabaseClient");
 // @route POST /api/add-manga
 router.post("/", async (req, res) => {
    try {
-      const { title, slug, description, status, cover_url } = req.body;
+      const { title, slug, description, status, cover_url, genres } = req.body;
 
       if (!title || !slug || !description || !status || !cover_url) {
          return res.status(400).json({ error: "⚠️ Barcha maydonlar to‘ldirilishi kerak." });
       }
 
       const { data, error } = await supabase.from("manga").insert([
-         {
-            title,
-            slug,
-            description,
-            status,
-            cover_url,
-         },
+         { title, slug, description, status, cover_url, genres }
       ]);
 
       if (error) {
