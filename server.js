@@ -16,7 +16,8 @@ app.get("/", (req, res) => {
 });
 
 // 🔁 API routelar
-app.use("/api", addMangaRoutes);
+app.use("/api/add-manga", addMangaRoutes); // ✅ to‘g‘ri marshrut
+
 app.use("/api", addChapterRoutes);
 app.use("/api", uploadRoutes);
 

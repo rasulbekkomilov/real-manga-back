@@ -4,7 +4,7 @@ const router = express.Router();
 const { supabase } = require("../supabaseClient");
 
 // @route POST /api/add-manga
-router.post("/", async (req, res) => {
+router.post("/add-manga", async (req, res) => {
    try {
       const { title, slug, description, status, cover_url, genres } = req.body;
 
